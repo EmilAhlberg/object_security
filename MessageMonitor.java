@@ -6,9 +6,13 @@ public class MessageMonitor{
 
   public synchronized void NewMessage(String message){
     messages.add(message);
+    notifyAll();
   }
 
   public synchronized String GetLatestMessage(){
+    while(messages.isEmpty()){
+      wait();
+    }
     return messages.getFirst();
   }
 
