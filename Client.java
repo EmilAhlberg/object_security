@@ -15,18 +15,19 @@ public class Client {
         socket = new DatagramSocket(this.port);
     }
 
-    public static void main(String[] args) throws NumberFormatException, IOException {
-        Client sender = new Client(3000);
+    public static void main(String[] args) throws NumberFormatException, IOException,InterruptedException {
+        Client sender = new Client(4000);
         System.out.println("-- Running UDP Client at " + InetAddress.getLocalHost() + " --");
         sender.start();
     }
 
-    private int start() throws IOException {
+    private int start() throws IOException,InterruptedException {
       InetAddress IPAddress = InetAddress.getByName("localhost");
         while (true) {
             String msg = "hej";
+            Thread.sleep(10000);
             DatagramPacket p = new DatagramPacket(
-                msg.getBytes(), msg.getBytes().length, IPAddress, port);
+                msg.getBytes(), msg.getBytes().length, IPAddress, 3000);
 
             this.socket.send(p);
         }
