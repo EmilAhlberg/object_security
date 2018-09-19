@@ -7,11 +7,9 @@ import java.net.SocketException;
 public class SocketListener implements Runnable {
 
  private DatagramSocket socket;
- private int port;
 
- public SocketListener(DatagramSocket socket, int port) {
+ public SocketListener(DatagramSocket socket) {
   this.socket = socket;
-  this.port = port;
  }
 
  public void run() {
