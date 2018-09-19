@@ -10,10 +10,16 @@ public class MessageMonitor{
     }
 
     public synchronized String GetLatestMessage(){
+     try{
         while(messages.isEmpty()){
             wait();
         }
         return messages.getFirst();
+       }
+       catch(InterruptedException e) {
+        System.out.println(e.getMessage());
+       }
+       return null;
     }
 
 }

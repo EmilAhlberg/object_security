@@ -16,7 +16,8 @@ public class Server {
     this.socket = new DatagramSocket(this.port);
     Thread listener = new Thread( new SocketListener(socket, port));
     Thread dispatcher = new Thread (new SocketDispatcher(socket, port));
-
+    listener.start();
+    dispatcher.start();
   }
 
   public static void main(String[] args) throws Exception {

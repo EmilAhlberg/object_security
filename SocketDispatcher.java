@@ -19,6 +19,7 @@ public class SocketDispatcher implements Runnable {
   try {
    InetAddress IPAddress = InetAddress.getByName("localhost");
    while (true) {
+    System.out.println("HEJ");
     String msg = "hej";
     Thread.sleep(10000);
     DatagramPacket p = new DatagramPacket(
