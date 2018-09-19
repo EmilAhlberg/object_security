@@ -6,13 +6,13 @@ import java.net.SocketException;
 
 public class Server {
 
-  private SocketListener socketListener;
-  private SocketDispatcher socketDispatcher;
+  private MessageMonitor monitor;
 
   public Server(int myPort, int otherPort) throws SocketException {
     DatagramSocket socket = new DatagramSocket(myPort);
-    Thread listener = new Thread( new SocketListener(socket));
-    Thread dispatcher = new Thread (new SocketDispatcher(socket, otherPort));
+    monitor = new MessageMonitor();
+    Thread listener = new Thread( new SocketListener(socket, monitor));
+    Thread dispatcher = new Thread (new SocketDispatcher(socket, monitor, otherPort));
     listener.start();
     dispatcher.start();
   }
@@ -20,4 +20,12 @@ public class Server {
   public static void main(String[] args) throws Exception {
     Server server = new Server(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
   }
+}
+
+
+ enum ProtocolState {
+ IDLE,
+ HELLO,
+ HELLO_RESPONSE,
+ IN_SESSION
 }

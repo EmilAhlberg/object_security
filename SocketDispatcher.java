@@ -1,40 +1,30 @@
-import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+
 
 public class SocketDispatcher implements Runnable {
 
  private DatagramSocket socket;
  private int otherPort;
+ private  MessageMonitor monitor;
 
- public SocketDispatcher(DatagramSocket socket, int otherPort) {
+ public SocketDispatcher(DatagramSocket socket, MessageMonitor monitor, int otherPort) {
   this.socket = socket;
+  this.monitor = monitor;
   this.otherPort = otherPort;
  }
 
  public void run() {
-
   try {
-   InetAddress IPAddress = InetAddress.getByName("localhost");
-   while (true) {
-    String msg = "hej din port är: " + otherPort;
-    Thread.sleep(10000);
-    DatagramPacket p = new DatagramPacket(
-    msg.getBytes(), msg.getBytes().length, IPAddress, otherPort);
-
-    this.socket.send(p);
+   while(true) {
+     monitor.sendMessage(otherPort, socket);
+     System.out.println("skickat");
+     Thread.sleep(5000);
    }
-  } catch(UnknownHostException e) {
-   System.out.println("UnknownHostException");
-  } catch(IOException e) {
-   System.out.println("IOException");
+  } catch(Exception e) {
+   System.out.println(e.getMessage());
   }
-  catch (InterruptedException e) {
-    System.out.println("InterruptedException");
-  }
-
  }
 }
