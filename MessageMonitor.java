@@ -6,9 +6,13 @@ import java.net.InetAddress;
 public class MessageMonitor{
 
  private  LinkedList<String> messages = new LinkedList<String>();
+ private int currentState;
+ private static final int HANDSHAKE = 0;
+ private static final int DATA_TRANSFER = 1;
 
  public MessageMonitor() {
   messages.add("första meddelandet!");
+  currentState = HANDSHAKE;
  }
 
  public synchronized void newMessage(DatagramPacket packet){
@@ -23,26 +27,36 @@ public class MessageMonitor{
     System.out.println("wait!");
      wait();
   }
-  messages.pop();
-  InetAddress IPAddress = InetAddress.getByName("localhost");
-  String msg = "hej din port är: " + port;
-  DatagramPacket p = new DatagramPacket(
-  msg.getBytes(), msg.getBytes().length, IPAddress, port);
+  parseMessage();
+  // InetAddress IPAddress = InetAddress.getByName("localhost");
+  // String msg = "hej din port är: " + port;
+  // DatagramPacket p = new DatagramPacket(
+  // msg.getBytes(), msg.getBytes().length, IPAddress, port);
   socket.send(p);
 
 }
 
-public synchronized String getLatestMessage(){
- try{
-  while(messages.isEmpty()){
-   wait();
-  }
-  return messages.getFirst();
- }
- catch(InterruptedException e) {
-  System.out.println(e.getMessage());
- }
- return null;
+private void parseMessage(){
+    byte[] message = messages.pop();
+    currentState = message[0];
+    switch(currentState){
+        case HANDSHAKE:
+            handleHandshake(message);
+            break;
+        case DATA_TRANSFER:
+            handleDataTransfer(message);
+            break;
+        default:
+            break;
+    }
+}
+
+private void handleHandshake(byte[] message){
+
+}
+
+private void handleDataTransfer(byte[] message){
+
 }
 
 }
