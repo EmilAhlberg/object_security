@@ -21,7 +21,6 @@ public class SocketListener implements Runnable {
     DatagramPacket packet = new DatagramPacket(buf,buf.length);
     socket.receive(packet);
     monitor.newMessage(packet);
-    System.out.println("lyssnat");
    }
   }
   catch(IOException e) {
