@@ -29,10 +29,10 @@ public class MessageMonitor{
   private int g, p, a, xb;
   private int sessionKey;
   private static SecretKeySpec secretKey;
-  private String[] strings = {"ETT MEDDELANDE", "TVÅ  MEDDELANDE", "TRE  MEDDELANDE", "FYRA  MEDDELANDE", "FEM MEDDELANDE", "SEX  MEDDELANDE"};
+  private String[] strings = {"HEMLIS", "CRYPTO", "WHISTLEBLOWER", "HUSH", "SECRET", "PASSWORD"};
 
   public MessageMonitor() {
-    a = 2; //TODO: random to a value that can be stored on 4 bytes
+    a = 1234; //TODO: random to a value that can be stored on 4 bytes
     currentState = HANDSHAKE;
   }
 
@@ -48,11 +48,13 @@ public class MessageMonitor{
 
   public synchronized void sendHandshakeHello(int port, DatagramSocket socket) throws Exception{
     byte[] message = new byte[14];
+    g = 5;
+    p = 10781; //TODO: check format if primes, relative primes  etc...
     message[0] = 1;
     message[1] = 14;
-    putIntIntoByteBuffer((int) (Math.pow(message[2], a) % message[3]), message, 2);
-    putIntIntoByteBuffer(10376, message, 6);
-    putIntIntoByteBuffer(11, message, 10);
+    putIntIntoByteBuffer(((int) Math.pow(g, a) % p), message, 2);
+    putIntIntoByteBuffer(g, message, 6);
+    putIntIntoByteBuffer(p, message, 10);
     InetAddress IPAddress = InetAddress.getByName("localhost");
     DatagramPacket p = new DatagramPacket(
     message, message.length, IPAddress, port);
@@ -71,14 +73,14 @@ public class MessageMonitor{
       System.out.println("Dispatcher waiting for messages!");
       wait();
     }
-    System.out.println("Recieved msg type: " + messages.get(0)[0]);
+    //System.out.println("Recieved msg type: " + messages.get(0)[0]);
     parseMessage();
     sendMessage(port, socket);
   }
 
   private void sendMessage(int port, DatagramSocket socket) throws Exception {
     byte[] msg = createMessage();
-    System.out.println("Sending msg type: " + msg[0]);
+    //System.out.println("Sending msg type: " + msg[0]);
     InetAddress IPAddress = InetAddress.getByName("localhost");
     DatagramPacket p = new DatagramPacket(
     msg, msg.length, IPAddress, port);
@@ -92,19 +94,19 @@ public class MessageMonitor{
       message = new byte[6];
       message[0] = 2; //message type
       message[1] = 6; //message length
-      putIntIntoByteBuffer(10101010, message, 2); //message payload
+      putIntIntoByteBuffer((int)Math.pow(g, a) % p, message, 2); //message payload
       initDataTransferMode();
       break;
       case DATA_TRANSFER:
       Random r = new Random();
-      // crypto stuff and scanner perhaps?
-      String msg = encryptString(strings[r.nextInt(6)]);
-      byte[] byteMsg = Base64.getEncoder().encode(msg.getBytes());
+      String cipherText = strings[r.nextInt(6)];
+      String msg = encryptString(cipherText);
+      byte[] byteMsg = msg.getBytes("UTF-8");
       message = new byte[2+byteMsg.length];
       message[0] = 3; //message type
-      message[1] = 10; //message length
+      message[1] = (byte)message.length; //message length
       System.arraycopy(byteMsg, 0, message, 2, byteMsg.length);
-      //putIntIntoByteBuffer(10101010, message, 2); //message payload
+      System.out.println("The cryptoText " + msg+ " is in plainText: " + cipherText);
       break;
       default:
       throw new Exception("Communication state unrecognized.");
@@ -116,18 +118,18 @@ public class MessageMonitor{
     byte[] message = messages.pop();
     switch(currentState){
       case HANDSHAKE:
-        xb = (message[2] & 0xff) | (message[3] & 0xff) << 8 | (message[4] & 0xff) << 16 | (message[5] & 0xff) << 24;
+      xb = (message[2] & 0xff) | (message[3] & 0xff) << 8 | (message[4] & 0xff) << 16 | (message[5] & 0xff) << 24;
       if(message[0] == 1) {
         // Recieve g, p determined by other party, together with xb.
         g = (message[6] & 0xff) | (message[7] & 0xff) << 8 | (message[8] & 0xff) << 16 | (message[9] & 0xff) << 24;
         p = (message[10] & 0xff) | (message[11] & 0xff) << 8 | (message[12] & 0xff) << 16 | (message[13] & 0xff) << 24;
       }
-      else if (message[0] == 2) {
-        currentState = DATA_TRANSFER;
+      System.out.println("\n-------\nValues negotiated:\ng: " + g + " p: " + p + " xb: " + xb);
+      if (message[0] == 2) {
+        initDataTransferMode();
       }
       // Regardless of initiating pary, xb always needs to be parsed.
-      initDataTransferMode();
-      System.out.println("g: " + g + " p: " + p + " xb: " + xb);
+
       break;
       case DATA_TRANSFER:
       handleDataTransfer(message);
@@ -137,17 +139,21 @@ public class MessageMonitor{
     }
   }
 
-  private void handleDataTransfer(byte[] message){
-
+  private void handleDataTransfer(byte[] message) throws Exception{
+    byte [] encryptedMsg = Arrays.copyOfRange(message, 2, message[1]);
+    String encryptedString = new String(encryptedMsg, "UTF-8");;
+    String decryptedString = decryptString(encryptedString);
+    System.out.println("I decrypted: " + encryptedString + " as: " + decryptedString);
   }
 
   private void initDataTransferMode() {
-    sessionKey = (int)Math.pow(xb, a) % p;
+    System.out.println("\n-------------\nHANDSHAKE SUCCESSFUL\n-------------\nDATA TRANSFER MODE INITIATED\n-------------\n");
     currentState = DATA_TRANSFER;
+    sessionKey = (int)Math.pow(xb, a) % p;
+    System.out.println("\nSession key: " + sessionKey +"\n");
     byte[] keyBytes = new byte [4];
     putIntIntoByteBuffer(sessionKey, keyBytes,0);
     MessageDigest sha = null;
-
     //sha = MessageDigest.getInstance("SHA-1");
     //key = sha.digest(key);
     keyBytes = Arrays.copyOf(keyBytes, 16);
@@ -166,20 +172,20 @@ public class MessageMonitor{
     return Base64.getEncoder().encodeToString(cipher.doFinal(cipherText.getBytes("UTF-8")));
   }
 
-  public static String decryptString(String cryptoShit) throws Exception {
+  public static String decryptString(String encryptedString) throws Exception {
     Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
     cipher.init(Cipher.DECRYPT_MODE, secretKey);
-    return new String(cipher.doFinal(Base64.getDecoder().decode(cryptoShit)));
+    return new String(cipher.doFinal(Base64.getDecoder().decode(encryptedString)));
   }
 
-/*
+  /*
   public static void main(String[] args) throws Exception{
-    String cipherText = "HEJHEJ";
-    int secretKey = 12345;
-    String cryptoShit = MessageMonitor.encryptString(cipherText, secretKey);
-    System.out.println(cryptoShit);
+  String cipherText = "HEJHEJ";
+  int secretKey = 12345;
+  String encryptedString = MessageMonitor.encryptString(cipherText, secretKey);
+  System.out.println(encryptedString);
 
-    System.out.println(MessageMonitor.decryptString(cryptoShit, secretKey));
-  }
-  */
+  System.out.println(MessageMonitor.decryptString(cryptoShit, secretKey));
+}
+*/
 }
