@@ -8,7 +8,8 @@ CLASSES = \
 	Server.java \
 	SocketDispatcher.java \
 	SocketListener.java \
-	MessageMonitor.java 
+	MessageMonitor.java \
+	CryptoHandler.java
 
 default: classes
 

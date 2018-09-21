@@ -11,8 +11,10 @@ public class MessageMonitor{
   private static final int HANDSHAKE = 0;
   private static final int DATA_TRANSFER = 1;
   private int g, p, a, xb;
+  private int sessionKey;
 
   public MessageMonitor() {
+    a = 2;
     currentState = HANDSHAKE;
   }
 
@@ -28,7 +30,6 @@ public class MessageMonitor{
 
   public synchronized void sendHandshakeHello(int port, DatagramSocket socket) throws Exception{
     byte[] message = new byte[14];
-    a = 2;
     message[0] = 1;
     message[1] = 14;
     putIntIntoByteBuffer((int) (Math.pow(message[2], a) % message[3]), message, 2);
@@ -75,6 +76,7 @@ public class MessageMonitor{
       message[1] = 6; //message length
       putIntIntoByteBuffer(10101010, message, 2); //message payload
       currentState = DATA_TRANSFER;
+      sessionKey = (int)Math.pow(xb, a) % p ;
       break;
       case DATA_TRANSFER:
       // crypto stuff and scanner perhaps?
@@ -84,7 +86,7 @@ public class MessageMonitor{
       putIntIntoByteBuffer(10101010, message, 2); //message payload
       break;
       default:
-      throw new Exception("Communucation state unrecognized.");
+      throw new Exception("Communication state unrecognized.");
     }
     return message;
   }
@@ -103,18 +105,18 @@ public class MessageMonitor{
       }
       // Regardless of initiating pary, xb always needs to be parsed.
       xb = (message[2] & 0xff) | (message[3] & 0xff) << 8 | (message[4] & 0xff) << 16 | (message[5] & 0xff) << 24;
+      sessionKey = (int)Math.pow(xb, a) % p;
       System.out.println("g: " + g + " p: " + p + " xb: " + xb);
       break;
       case DATA_TRANSFER:
       handleDataTransfer(message);
       break;
       default:
-      throw new Exception("Communucation state unrecognized.");
+      throw new Exception("Communication state unrecognized.");
     }
   }
 
   private void handleDataTransfer(byte[] message){
 
   }
-
 }
