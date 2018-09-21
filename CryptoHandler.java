@@ -11,28 +11,25 @@ import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.KeyFactory;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class CryptoHandler {
   private static BigInteger g512 = new BigInteger("1234567890", 16);
   private static BigInteger p512 = new BigInteger("1234567890", 16);
 
   public KeyPair getKeyPair() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
-    Security.addProvider(new  BouncyCastleProvider());
 
     DHParameterSpec dhParams = new DHParameterSpec(p512, g512);
-    KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "BC");
+    KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH");
 
     keyGen.initialize(dhParams, new SecureRandom());
 
-    KeyAgreement aKeyAgree = KeyAgreement.getInstance("DH", "BC");
+    KeyAgreement aKeyAgree = KeyAgreement.getInstance("DH");
     KeyPair aPair = keyGen.generateKeyPair();
 
     return null;
   }
 
   public static void createSpecificKey(int pVal, int gVal) throws Exception {
-    Security.addProvider(new BouncyCastleProvider());
 
     BigInteger p = new BigInteger(Integer.toString(pVal));
     BigInteger g = new BigInteger(Integer.toString(gVal));
@@ -52,9 +49,6 @@ public class CryptoHandler {
   public static void main(String[] args) throws  Exception {
       CryptoHandler.createSpecificKey(5, 3);
   }
-
-
-
 }
 
 
