@@ -1,7 +1,13 @@
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import javax.crypto.KeyAgreement;
+import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.DHPublicKeySpec;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.KeyFactory;
@@ -11,7 +17,7 @@ public class CryptoHandler {
   private static BigInteger g512 = new BigInteger("1234567890", 16);
   private static BigInteger p512 = new BigInteger("1234567890", 16);
 
-  public KeyPair getKeyPair() {
+  public KeyPair getKeyPair() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
     Security.addProvider(new  BouncyCastleProvider());
 
     DHParameterSpec dhParams = new DHParameterSpec(p512, g512);
@@ -21,21 +27,8 @@ public class CryptoHandler {
 
     KeyAgreement aKeyAgree = KeyAgreement.getInstance("DH", "BC");
     KeyPair aPair = keyGen.generateKeyPair();
-  }
 
-  public void placeHolder() {
-    KeyAgreement bKeyAgree = KeyAgreement.getInstance("DH", "BC");
-    KeyPair bPair = keyGen.generateKeyPair();
-
-    aKeyAgree.init(aPair.getPrivate());
-    bKeyAgree.init(bPair.getPrivate());
-
-    aKeyAgree.doPhase(bPair.getPublic(), true);
-    bKeyAgree.doPhase(aPair.getPublic(), true);
-
-    MessageDigest hash = MessageDigest.getInstance("SHA1", "BC");
-    System.out.println(new String(hash.digest(aKeyAgree.generateSecret())));
-    System.out.println(new String(hash.digest(bKeyAgree.generateSecret())));
+    return null;
   }
 
   public static void createSpecificKey(int pVal, int gVal) throws Exception {
@@ -55,4 +48,17 @@ public class CryptoHandler {
     DHPublicKeySpec kspec = (DHPublicKeySpec) kfactory.getKeySpec(kp.getPublic(),
         DHPublicKeySpec.class);
   }
+
+  public static void main(String[] args) throws  Exception {
+      CryptoHandler.createSpecificKey(5, 3);
+  }
+
+
+
 }
+
+
+
+/*
+javac -sourcepath / -classpath bcprov-jdk15on-160.jar CryptoHandler.java
+*/

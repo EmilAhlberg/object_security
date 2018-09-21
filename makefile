@@ -5,11 +5,10 @@ JC = javac
 		$(JC) $(JFLAGS) $*.java
 
 CLASSES = \
-	Server.java \
+	MessageMonitor.java \
 	SocketDispatcher.java \
 	SocketListener.java \
-	MessageMonitor.java \
-	CryptoHandler.java
+	Server.java
 
 default: classes
 
