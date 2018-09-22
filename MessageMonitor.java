@@ -10,6 +10,7 @@ import java.util.Base64.Decoder;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.Mac;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
@@ -17,6 +18,7 @@ import java.security.NoSuchAlgorithmException;
 import java.io.UnsupportedEncodingException;
 import java.util.Random;
 import java.lang.System;
+
 
 //TODO: remove all static method signatures
 
@@ -85,6 +87,18 @@ public class MessageMonitor{
     DatagramPacket p = new DatagramPacket(
     msg, msg.length, IPAddress, port);
     socket.send(p);
+  }
+
+  private byte[] generateHMAC() throws Exception{
+      // Perform HMAC using SHA-256
+      byte[] keyBytes = new byte [4];
+      putIntIntoByteBuffer(sessionKey, keyBytes,0);
+      keyBytes = Arrays.copyOf(keyBytes, 16);
+      SecretKeySpec hks = new SecretKeySpec(keyBytes, "HmacSHA256"); //Should not use same key for hmac, meh
+      Mac m = Mac.getInstance("HmacSHA256");
+      m.init(hks);
+      byte[] hmac = m.doFinal();
+      return hmac;
   }
 
   private byte[] createMessage() throws Exception{
