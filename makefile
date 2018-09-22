@@ -5,6 +5,7 @@ JC = javac
 		$(JC) $(JFLAGS) $*.java
 
 CLASSES = \
+	MessageFactory.java \
 	MessageMonitor.java \
 	SocketDispatcher.java \
 	SocketListener.java \
