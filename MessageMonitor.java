@@ -8,7 +8,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-//TODO: remove all static method signatures
 public class MessageMonitor{
 
   private LinkedList<byte[]> messages = new LinkedList<byte[]>();
@@ -37,7 +36,7 @@ public class MessageMonitor{
   }
 
   public synchronized void sendHandshakeHello(int port, DatagramSocket socket) throws Exception{
-    byte[] message = MessageFactory.buildMessage(1, g, p, a);
+    byte[] message = MessageFactory.buildMessage(MessageFactory.TYPE_ONE, g, p, a);
     InetAddress IPAddress = InetAddress.getByName("localhost");
     DatagramPacket p = new DatagramPacket(
     message, message.length, IPAddress, port);
@@ -67,11 +66,11 @@ public class MessageMonitor{
     byte[] message;
     switch(currentState) {
       case HANDSHAKE:
-      message = MessageFactory.buildMessage(2, g, p, a);
+      message = MessageFactory.buildMessage(MessageFactory.TYPE_TWO, g, p, a);
       initDataTransferMode();
       break;
       case DATA_TRANSFER:
-      message = MessageFactory.buildMessage(3, secretKey);
+      message = MessageFactory.buildMessage(MessageFactory.TYPE_THREE, secretKey);
       break;
       default:
       throw new Exception("Communication state unrecognized.");
@@ -84,14 +83,14 @@ public class MessageMonitor{
     switch(currentState){
       case HANDSHAKE:
       // Regardless of initiating pary, xb always needs to be parsed.
-      xb = (message[2] & 0xff) | (message[3] & 0xff) << 8 | (message[4] & 0xff) << 16 | (message[5] & 0xff) << 24;
-      if(message[0] == 1) {
+      xb = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_X);
+      if(message[MessageFactory.PROTOCOL_POS_MSG_TYPE] == MessageFactory.TYPE_ONE) {
         // Recieve g, p determined by other party, together with xb.
-        g = (message[6] & 0xff) | (message[7] & 0xff) << 8 | (message[8] & 0xff) << 16 | (message[9] & 0xff) << 24;
-        p = (message[10] & 0xff) | (message[11] & 0xff) << 8 | (message[12] & 0xff) << 16 | (message[13] & 0xff) << 24;
+        g = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_G);
+        p = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_P);
       }
       System.out.println("\n-------\nValues negotiated:\ng: " + g + " p: " + p + " xb: " + xb);
-      if (message[0] == 2) {
+      if (message[MessageFactory.PROTOCOL_POS_MSG_TYPE] == MessageFactory.TYPE_TWO) {
         initDataTransferMode();
       }
       break;
@@ -104,7 +103,7 @@ public class MessageMonitor{
   }
 
   private void handleDataTransfer(byte[] message) throws Exception{
-    byte [] encryptedMsg = Arrays.copyOfRange(message, 2, message[1]);
+    byte [] encryptedMsg = Arrays.copyOfRange(message, MessageFactory.HEADER_LENGTH, message[1]);
     String encryptedString = new String(encryptedMsg, "UTF-8");;
     String decryptedString = decryptString(encryptedString);
     System.out.println("I decrypted: " + encryptedString + " as: " + decryptedString);
@@ -116,7 +115,7 @@ public class MessageMonitor{
     sessionKey = (int)Math.pow(xb, a) % p;
     System.out.println("\nSession key: " + sessionKey +"\n");
     byte[] keyBytes = new byte[4];
-    MessageFactory.putIntIntoByteBuffer(sessionKey, keyBytes,0);
+    MessageFactory.putIntIntoByteBuffer(sessionKey, keyBytes, 0);
     MessageDigest sha = null;
     //sha = MessageDigest.getInstance("SHA-1");
     //key = sha.digest(key);
@@ -124,7 +123,7 @@ public class MessageMonitor{
     secretKey = new SecretKeySpec(keyBytes, "AES");
   }
 
-  public static String decryptString(String encryptedString) throws Exception {
+  public String decryptString(String encryptedString) throws Exception {
     Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
     cipher.init(Cipher.DECRYPT_MODE, secretKey);
     return new String(cipher.doFinal(Base64.getDecoder().decode(encryptedString)));
