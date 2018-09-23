@@ -96,7 +96,7 @@ public class MessageFactory {
         return hmac;
     }
     //Checks if the HMAC is correct
-    public boolean checkHMAC(byte[] hmac, byte[] encryptedMessage, String password) throws Exception {
+    public static boolean checkHMAC(byte[] hmac, byte[] encryptedMessage, String password) throws Exception {
 
         // Regenerate HMAC key
         byte[] hmacKey = makeKey(password);
@@ -108,7 +108,7 @@ public class MessageFactory {
         byte[] chmac = m.doFinal(encryptedMessage);
 
         // Compare Computed HMAC vs Recovered HMAC
-        if (MessageDigest.isEqual(hmac, chmac)) {
+        if (MessageDigest.isEqual(hmac, Arrays.copyOfRange(cmac, 0, 4))) {
             return true;
         }else{
             return false;

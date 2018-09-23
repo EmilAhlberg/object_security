@@ -104,9 +104,13 @@ public class MessageMonitor{
 
   private void handleDataTransfer(byte[] message) throws Exception{
     byte [] encryptedMsg = Arrays.copyOfRange(message, MessageFactory.HEADER_LENGTH, message[1]);
+    byte [] hmac = Arrays.copyOfRange(message, 2, 6);
     String encryptedString = new String(encryptedMsg, "UTF-8");;
     String decryptedString = decryptString(encryptedString);
-    System.out.println("I decrypted: " + encryptedString + " as: " + decryptedString);
+    if(MessageFactory.checkHMAC(hmac, encryptedMsg, Integer.toString(sessionKey)){
+        System.out.println("I decrypted: " + encryptedString + " as: " + decryptedString);
+    }
+    throw Exception("HMAC check failed!");
   }
 
   private void initDataTransferMode() {
