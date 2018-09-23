@@ -6,25 +6,25 @@ import java.net.SocketException;
 
 public class SocketListener implements Runnable {
 
- private DatagramSocket socket;
- private MessageMonitor monitor;
+    private DatagramSocket socket;
+    private MessageMonitor monitor;
 
- public SocketListener(DatagramSocket socket, MessageMonitor monitor) {
-  this.socket = socket;
-  this.monitor = monitor;
- }
+    public SocketListener(DatagramSocket socket, MessageMonitor monitor) {
+        this.socket = socket;
+        this.monitor = monitor;
+    }
 
- public void run() {
-  try {
-   while(true) {
-    byte[] buf = new byte[256];
-    DatagramPacket packet = new DatagramPacket(buf,buf.length);
-    socket.receive(packet);
-    monitor.newMessage(packet);
-   }
-  }
-  catch(IOException e) {
-   System.out.println("Listener exception:" + e.getMessage());
-  }
- }
+    public void run() {
+        try {
+            while(true) {
+                byte[] buf = new byte[256];
+                DatagramPacket packet = new DatagramPacket(buf,buf.length);
+                socket.receive(packet);
+                monitor.newMessage(packet);
+            }
+        }
+        catch(IOException e) {
+            System.out.println("Listener exception:" + e.getMessage());
+        }
+    }
 }

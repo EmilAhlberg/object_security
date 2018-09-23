@@ -68,7 +68,6 @@ public class MessageFactory {
         return message;
     }
 
-    //TODO: private visibility, non static
     private static String encryptString(String cipherText, SecretKeySpec secretKey) throws Exception {
         byte [] cipherTextBytes =  Base64.getEncoder().encode(cipherText.getBytes());
 
@@ -77,6 +76,7 @@ public class MessageFactory {
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
         return Base64.getEncoder().encodeToString(cipher.doFinal(cipherText.getBytes("UTF-8")));
     }
+
     //Helper function for the HMAC
     private static byte[] makeKey(String password) throws Exception {
         PBEKeySpec ks = new PBEKeySpec(password.toCharArray(), null, 10, 32); //Default value of salt is null
@@ -95,6 +95,7 @@ public class MessageFactory {
         byte[] hmac = m.doFinal(encryptedMessage);
         return hmac;
     }
+
     //Checks if the HMAC is correct
     public static boolean checkHMAC(byte[] hmac, byte[] encryptedMessage, String password) throws Exception {
 
@@ -114,7 +115,6 @@ public class MessageFactory {
             return false;
         }
     }
-
 
     // Used as helper method in MessageMonitor, should be in helper class ideally.
     public static void putIntIntoByteBuffer(int nbr, byte[] bytes, int pos ) {
