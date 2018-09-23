@@ -4,6 +4,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.Mac;
@@ -36,7 +37,7 @@ public class MessageFactory {
     public static final int PROTOCOL_POS_P = 14;
 
     // Constructs type 1 and type 2 messages (i.e. handshake messages)
-    public static byte[] buildMessage(int messageType, int g, int p, int a, int sequenceNbr) {
+    public static byte[] buildMessage(int messageType, int g, int p, int a, int sequenceNbr) throws Exception{
         byte[] message = new byte[64];
         byte headerAndPayloadLength;
         switch(messageType) {
@@ -50,11 +51,9 @@ public class MessageFactory {
             putIntIntoByteBuffer(((int) Math.pow(g, a) % p), message, PROTOCOL_POS_X);
             putIntIntoByteBuffer(g, message, PROTOCOL_POS_G);
             putIntIntoByteBuffer(p, message, PROTOCOL_POS_P);
-            /*
-            // HMAC
-            byte[] hmac = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength), Integer.toString(sessionKey));
-            System.arraycopy(hmac, 0, message, headerAndPayloadLength, hmac.length); //add hmac to message
-            */
+            // HMAC, This should be done with certificates not hardcoded password
+            byte[] hmac1 = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength), "password");
+            System.arraycopy(hmac1, 0, message, headerAndPayloadLength, hmac1.length); //add hmac to message
             break;
             case TYPE_TWO:
             headerAndPayloadLength =  HEADER_LENGTH + TYPE_TWO_PAYLOAD_LENGTH;
@@ -64,11 +63,9 @@ public class MessageFactory {
             putIntIntoByteBuffer(sequenceNbr, message, PROTOCOL_POS_SEQUENCE_NBR);
             // PAYLOAD
             putIntIntoByteBuffer((int)Math.pow(g, a) % p, message, PROTOCOL_POS_X); //message payload
-            /*
             // HMAC
-            byte[] hmac = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength), Integer.toString(sessionKey));
-            System.arraycopy(hmac, 0, message, headerAndPayloadLength, hmac.length); //add hmac to message
-            */
+            byte[] hmac2 = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength), "password");
+            System.arraycopy(hmac2, 0, message, headerAndPayloadLength, hmac2.length); //add hmac to message
             break;
         }
         return message;
@@ -106,7 +103,9 @@ public class MessageFactory {
 
     //Helper function for the HMAC
     private static byte[] makeKey(String password) throws Exception {
-        PBEKeySpec ks = new PBEKeySpec(password.toCharArray(), null, 10, 32); //Default value of salt is null
+        SecureRandom r = SecureRandom.getInstance("SHA1PRNG");
+        byte[] salt = new byte[20]; r.nextBytes(salt);
+        PBEKeySpec ks = new PBEKeySpec(password.toCharArray(), salt , 10, 32);
         SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         return skf.generateSecret(ks).getEncoded();
     }

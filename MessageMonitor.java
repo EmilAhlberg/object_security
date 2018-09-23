@@ -83,8 +83,12 @@ public class MessageMonitor{
 
     private void parseMessage() throws Exception{
         byte[] message = messages.pop();
+        byte[] hmac = Arrays.copyOfRange(message, 32, 64);
         switch(currentState){
             case HANDSHAKE:
+            if(!MessageFactory.checkHMAC(hmac, Arrays.copyOfRange(message, 0, 32), "password")){
+                throw new Exception("HANDSHAKE hmac is not correct");
+            }
             // Regardless of initiating pary, xb always needs to be parsed.
             xb = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_X);
             if(message[MessageFactory.PROTOCOL_POS_MSG_TYPE] == MessageFactory.TYPE_ONE) {
