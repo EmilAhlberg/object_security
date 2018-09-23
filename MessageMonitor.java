@@ -17,6 +17,9 @@ public class MessageMonitor{
     private int g, p, a, xb;
     private int sessionKey;
     private static SecretKeySpec secretKey;
+    // Replay protection variables.
+    private static int slidingWindowThreshold = 0;
+    private static int currentSequenceNumber = 1; // needs to be larger than threshold to be accepted
 
     public MessageMonitor() {
         a = 1234; //TODO: random to a value that can be stored on 4 bytes
@@ -36,7 +39,7 @@ public class MessageMonitor{
     }
 
     public synchronized void sendHandshakeHello(int port, DatagramSocket socket) throws Exception{
-        byte[] message = MessageFactory.buildMessage(MessageFactory.TYPE_ONE, g, p, a);
+        byte[] message = MessageFactory.buildMessage(MessageFactory.TYPE_ONE, g, p, a, currentSequenceNumber++);
         InetAddress IPAddress = InetAddress.getByName("localhost");
         DatagramPacket p = new DatagramPacket(
         message, message.length, IPAddress, port);
@@ -66,11 +69,11 @@ public class MessageMonitor{
         byte[] message;
         switch(currentState) {
             case HANDSHAKE:
-            message = MessageFactory.buildMessage(MessageFactory.TYPE_TWO, g, p, a);
+            message = MessageFactory.buildMessage(MessageFactory.TYPE_TWO, g, p, a, currentSequenceNumber++);
             initDataTransferMode();
             break;
             case DATA_TRANSFER:
-            message = MessageFactory.buildMessage(MessageFactory.TYPE_THREE, secretKey, sessionKey);
+            message = MessageFactory.buildMessage(MessageFactory.TYPE_THREE, secretKey, sessionKey, currentSequenceNumber++);
             break;
             default:
             throw new Exception("Communication state unrecognized.");
@@ -104,13 +107,14 @@ public class MessageMonitor{
 
     private void handleDataTransfer(byte[] message) throws Exception{
         byte [] encryptedMsg = Arrays.copyOfRange(message, MessageFactory.HEADER_LENGTH, message[1]);
+        // this below is likely broken now, HMAC position is moved (not between 2-6)
         byte [] hmac = Arrays.copyOfRange(message, 2, 6);
         String encryptedString = new String(encryptedMsg, "UTF-8");;
         String decryptedString = decryptString(encryptedString);
-        if(MessageFactory.checkHMAC(hmac, encryptedMsg, Integer.toString(sessionKey)){
+        if(MessageFactory.checkHMAC(hmac, encryptedMsg, Integer.toString(sessionKey))){
             System.out.println("I decrypted: " + encryptedString + " as: " + decryptedString);
         }
-        throw Exception("HMAC check failed!");
+        throw new Exception("HMAC check failed!");
     }
 
     private void initDataTransferMode() {
