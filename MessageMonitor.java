@@ -70,7 +70,7 @@ public class MessageMonitor{
       initDataTransferMode();
       break;
       case DATA_TRANSFER:
-      message = MessageFactory.buildMessage(MessageFactory.TYPE_THREE, secretKey);
+      message = MessageFactory.buildMessage(MessageFactory.TYPE_THREE, secretKey, sessionKey);
       break;
       default:
       throw new Exception("Communication state unrecognized.");
