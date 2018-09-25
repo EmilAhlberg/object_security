@@ -112,13 +112,15 @@ public class MessageMonitor{
     private void handleDataTransfer(byte[] message) throws Exception{
         byte [] encryptedMsg = Arrays.copyOfRange(message, MessageFactory.HEADER_LENGTH, message[1]);
         // this below is likely broken now, HMAC position is moved (not between 2-6)
-        byte [] hmac = Arrays.copyOfRange(message, 2, 6);
+
+        byte [] hmac = Arrays.copyOfRange(message, message[1], message[1] + 32);
         String encryptedString = new String(encryptedMsg, "UTF-8");;
         String decryptedString = decryptString(encryptedString);
         if(MessageFactory.checkHMAC(hmac, encryptedMsg, Integer.toString(sessionKey))){
             System.out.println("I decrypted: " + encryptedString + " as: " + decryptedString);
         }
-        throw new Exception("HMAC check failed!");
+        System.out.println("Hmac check fail");
+        //throw new Exception("HMAC check failed!");
     }
 
     private void initDataTransferMode() {
