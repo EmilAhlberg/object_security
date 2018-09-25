@@ -103,9 +103,7 @@ public class MessageFactory {
 
     //Helper function for the HMAC
     private static byte[] makeKey(String password) throws Exception {
-        SecureRandom r = SecureRandom.getInstance("SHA1PRNG");
-        byte[] salt = new byte[20]; r.nextBytes(salt);
-        PBEKeySpec ks = new PBEKeySpec(password.toCharArray(), salt , 10, 32);
+        PBEKeySpec ks = new PBEKeySpec(password.toCharArray());
         SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         return skf.generateSecret(ks).getEncoded();
     }
