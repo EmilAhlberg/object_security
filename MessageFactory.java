@@ -10,16 +10,16 @@ import javax.crypto.Mac;
 import java.util.Arrays;
 
 public class MessageFactory {
-    private static String[] strings = {"WORD1", "WORD2", "WORD3", "WORD4", "WORD5", "WORD6"};
+    private static String[] strings = {"RD1", "RD2", "RD3", "RD4", "RD5", "RD6"};
     public static final int TYPE_ONE = 1;
     public static final int TYPE_TWO = 2;
     public static final int TYPE_THREE = 3;
     //msg type/msg length/sequenceNbr
     public static final int HEADER_LENGTH = 1 + 1 + 4;
     //  x/g/p
-    private static final int TYPE_ONE_PAYLOAD_LENGTH = 4 + 4 + 4;
+    public static final int TYPE_ONE_PAYLOAD_LENGTH = 4 + 4 + 4;
     // x
-    private static final int TYPE_TWO_PAYLOAD_LENGTH = 4;
+    public static final int TYPE_TWO_PAYLOAD_LENGTH = 4;
     /* CURRENT PROTOCOL FORMAT:
     |                                          | THIS PORTION IS ENCRYPTED!|
     |                 HEADER                   |         PAYLOAD           |               HMAC                     |
@@ -29,15 +29,16 @@ public class MessageFactory {
     */
     public static final int PROTOCOL_POS_MSG_TYPE = 0;
     private static final int PROTOCOL_POS_MSG_LENGTH = 1;
-    private static final int PROTOCOL_POS_SEQUENCE_NBR = 2;
+    public static final int PROTOCOL_POS_SEQUENCE_NBR = 2;
     public static final int PROTOCOL_POS_X = 6;
     public static final int PROTOCOL_POS_G = 10;
     public static final int PROTOCOL_POS_P = 14;
 
     // Constructs type 1 and type 2 messages (i.e. handshake messages)
-    public static byte[] buildMessage(int messageType, int g, int p, int a, int sequenceNbr) {
+    public static byte[] buildMessage(int messageType, int g, int p, int a, int sequenceNbr) throws Exception {
         byte[] message = new byte[64];
         byte headerAndPayloadLength;
+        byte[] hmac;
         switch(messageType) {
             case TYPE_ONE:
             headerAndPayloadLength =  HEADER_LENGTH + TYPE_ONE_PAYLOAD_LENGTH;
@@ -49,11 +50,11 @@ public class MessageFactory {
             putIntIntoByteBuffer(((int) Math.pow(g, a) % p), message, PROTOCOL_POS_X);
             putIntIntoByteBuffer(g, message, PROTOCOL_POS_G);
             putIntIntoByteBuffer(p, message, PROTOCOL_POS_P);
-            /*
+
             // HMAC
-            byte[] hmac = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength), Integer.toString(sessionKey));
+            hmac = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength), "password");
             System.arraycopy(hmac, 0, message, headerAndPayloadLength, hmac.length); //add hmac to message
-            */
+
             break;
             case TYPE_TWO:
             headerAndPayloadLength =  HEADER_LENGTH + TYPE_TWO_PAYLOAD_LENGTH;
@@ -63,11 +64,11 @@ public class MessageFactory {
             putIntIntoByteBuffer(sequenceNbr, message, PROTOCOL_POS_SEQUENCE_NBR);
             // PAYLOAD
             putIntIntoByteBuffer((int)Math.pow(g, a) % p, message, PROTOCOL_POS_X); //message payload
-            /*
+
             // HMAC
-            byte[] hmac = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength), Integer.toString(sessionKey));
+            hmac = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength), "password");
             System.arraycopy(hmac, 0, message, headerAndPayloadLength, hmac.length); //add hmac to message
-            */
+
             break;
         }
         return message;
@@ -81,7 +82,7 @@ public class MessageFactory {
         String msg = encryptString(cipherText, secretKey);
         byte[] byteMsg = msg.getBytes("UTF-8");
         // HEADER
-        byte headerAndPayloadLength = (byte)(HEADER_LENGTH+byteMsg.length);
+        byte headerAndPayloadLength = (byte)(HEADER_LENGTH + byteMsg.length);
         message[PROTOCOL_POS_MSG_TYPE] = (byte)messageType; //message type
         message[PROTOCOL_POS_MSG_LENGTH] = headerAndPayloadLength; //message length
         putIntIntoByteBuffer(sequenceNbr, message, PROTOCOL_POS_SEQUENCE_NBR); //message sequence number
@@ -105,12 +106,9 @@ public class MessageFactory {
 
     //Helper function for the HMAC
     private static byte[] makeKey(String password) throws Exception {
-
         PBEKeySpec ks = new PBEKeySpec(password.toCharArray());
-        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
         byte [] temp = skf.generateSecret(ks).getEncoded();
-            System.out.println("makeKey");
-        System.out.println("FAIL? nO");
         return temp;
     }
 
@@ -126,19 +124,14 @@ public class MessageFactory {
     }
 
     //Checks if the HMAC is correct
-    public static boolean checkHMAC(byte[] hmac, byte[] encryptedMessage, String password) throws Exception {
-
+    public static boolean checkHMAC(byte[] hmac, byte[] headerAndPayload, String password) throws Exception {
         // Regenerate HMAC key
-                System.out.println("här1");
         byte[] hmacKey = makeKey(password);
-        System.out.println("här2");
         // Perform HMAC using SHA-256
         SecretKeySpec hks = new SecretKeySpec(hmacKey, "HmacSHA256");
         Mac m = Mac.getInstance("HmacSHA256");
-                System.out.println("här3");
         m.init(hks);
-        byte[] chmac = m.doFinal(encryptedMessage);
-
+        byte[] chmac = m.doFinal(headerAndPayload);
         // Compare Computed HMAC vs Recovered HMAC
         if (MessageDigest.isEqual(hmac, chmac)) {
             return true;

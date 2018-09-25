@@ -83,15 +83,20 @@ public class MessageMonitor{
 
     private void parseMessage() throws Exception{
         byte[] message = messages.pop();
-        byte[] hmac = Arrays.copyOfRange(message, 32, 64);
+        byte[] hmac = Arrays.copyOfRange(message, message[1],message[1] + 32 );
+
         switch(currentState){
             case HANDSHAKE:
-            if(!MessageFactory.checkHMAC(hmac, Arrays.copyOfRange(message, 0, 32), "password")){
+            // CHECK HMAC
+            if(!MessageFactory.checkHMAC(hmac, Arrays.copyOfRange(message, 0, message[1]), "password")){
                 throw new Exception("HANDSHAKE hmac is not correct");
             }
+            checkSequenceNumber(message);
+            slidingWindowThreshold =MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_SEQUENCE_NBR);
+            byte msgType = message[MessageFactory.PROTOCOL_POS_MSG_TYPE];
             // Regardless of initiating pary, xb always needs to be parsed.
             xb = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_X);
-            if(message[MessageFactory.PROTOCOL_POS_MSG_TYPE] == MessageFactory.TYPE_ONE) {
+            if(msgType == MessageFactory.TYPE_ONE) {
                 // Recieve g, p determined by other party, together with xb.
                 g = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_G);
                 p = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_P);
@@ -109,18 +114,30 @@ public class MessageMonitor{
         }
     }
 
-    private void handleDataTransfer(byte[] message) throws Exception{
-        byte [] encryptedMsg = Arrays.copyOfRange(message, MessageFactory.HEADER_LENGTH, message[1]);
-        // this below is likely broken now, HMAC position is moved (not between 2-6)
+    private void checkSequenceNumber(byte[] message) throws Exception {
+        int recievedSequenceNumber = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_SEQUENCE_NBR);
+        if(recievedSequenceNumber >= slidingWindowThreshold) {
+            slidingWindowThreshold = recievedSequenceNumber + 1;
+        } else {
+            throw new Exception("Replay attack!");
+        }
+    }
 
-        byte [] hmac = Arrays.copyOfRange(message, message[1], message[1] + 32);
-        String encryptedString = new String(encryptedMsg, "UTF-8");;
-        String decryptedString = decryptString(encryptedString);
-        if(MessageFactory.checkHMAC(hmac, encryptedMsg, Integer.toString(sessionKey))){
+    private void handleDataTransfer(byte[] message) throws Exception{
+        byte[] hmac = Arrays.copyOfRange(message, message[1], message[1] + 32);
+        byte[] integrityString = Arrays.copyOfRange(message, 0, message[1]);
+        if(MessageFactory.checkHMAC(hmac, integrityString, Integer.toString(sessionKey))){
+            checkSequenceNumber(message);
+            byte [] encryptedMsg = Arrays.copyOfRange(message, MessageFactory.HEADER_LENGTH, message[1]);
+            String encryptedString = new String(encryptedMsg, "UTF-8");;
+            String decryptedString = decryptString(encryptedString);
             System.out.println("I decrypted: " + encryptedString + " as: " + decryptedString);
         }
-        System.out.println("Hmac check fail");
-        //throw new Exception("HMAC check failed!");
+        else {
+            //System.out.println("Hmac check fail");
+            throw new Exception("HMAC check failed!");
+        }
+
     }
 
     private void initDataTransferMode() {
