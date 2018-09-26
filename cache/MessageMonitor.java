@@ -23,8 +23,8 @@ public class MessageMonitor{
     private static int currentSequenceNumber = 1; // needs to be larger than threshold to be accepted
 
     public MessageMonitor() {
-        a =  new SecureRandom().nextInt(10) + 1; //between 1-10, proof-of-concept!
-        System.out.println("SuperRandom: " + a);
+        a =  new SecureRandom().nextInt(20) + 1; //between 1-10, proof-of-concept!
+        System.out.println("Private a: " + a);
         g = 3;
         p = 2081; //TODO: check format if primes, relative primes  etc...
         currentState = HANDSHAKE;
@@ -40,42 +40,42 @@ public class MessageMonitor{
         notifyAll();
     }
 
-    public synchronized void sendHandshakeHello(int port, DatagramSocket socket) throws Exception{
-        byte[] message = MessageFactory.buildMessage(MessageFactory.TYPE_ONE, g, p, a, currentSequenceNumber++);
+    public synchronized void sendHandshakeHello(int bPort, int cachePort, DatagramSocket socket) throws Exception{
+        byte[] message = MessageFactory.buildMessage(bPort, MessageFactory.TYPE_ONE, g, p, a, currentSequenceNumber++);
         InetAddress IPAddress = InetAddress.getByName("localhost");
         DatagramPacket p = new DatagramPacket(
-        message, message.length, IPAddress, port);
+        message, message.length, IPAddress, cachePort);
         socket.send(p);
     }
 
-    public synchronized void handleMessageRecieved(int port, DatagramSocket socket) throws Exception {
+    public synchronized void handleMessageRecieved(int bPort, int cachePort, DatagramSocket socket) throws Exception {
         while (messages.isEmpty()) {
             System.out.println("Dispatcher waiting for messages!");
             wait();
         }
         //System.out.println("Recieved msg type: " + messages.get(0)[0]);
         parseMessage();
-        sendMessage(port, socket);
+        sendMessage(bPort, cachePort, socket);
     }
 
-    private void sendMessage(int port, DatagramSocket socket) throws Exception {
-        byte[] msg = createMessage();
+    private void sendMessage(int bPort, int cachePort, DatagramSocket socket) throws Exception {
+        byte[] msg = createMessage(bPort);
         //System.out.println("Sending msg type: " + msg[0]);
         InetAddress IPAddress = InetAddress.getByName("localhost");
         DatagramPacket p = new DatagramPacket(
-        msg, msg.length, IPAddress, port);
+        msg, msg.length, IPAddress, cachePort);
         socket.send(p);
     }
 
-    private byte[] createMessage() throws Exception{
+    private byte[] createMessage(int bPort) throws Exception{
         byte[] message;
         switch(currentState) {
             case HANDSHAKE:
-            message = MessageFactory.buildMessage(MessageFactory.TYPE_TWO, g, p, a, currentSequenceNumber++);
+            message = MessageFactory.buildMessage(bPort, MessageFactory.TYPE_TWO, g, p, a, currentSequenceNumber++);
             initDataTransferMode();
             break;
             case DATA_TRANSFER:
-            message = MessageFactory.buildMessage(MessageFactory.TYPE_THREE, secretKey, sessionKey, currentSequenceNumber++);
+            message = MessageFactory.buildMessage(bPort, MessageFactory.TYPE_THREE, secretKey, sessionKey, currentSequenceNumber++);
             break;
             default:
             throw new Exception("Communication state unrecognized.");
@@ -85,16 +85,16 @@ public class MessageMonitor{
 
     private void parseMessage() throws Exception{
         byte[] message = messages.pop();
-        byte[] hmac = Arrays.copyOfRange(message, message[1],message[1] + 32 );
-
+        int headerAndPayloadLength = message[MessageFactory.PROTOCOL_POS_MSG_LENGTH];
+        byte[] hmac = Arrays.copyOfRange(message, headerAndPayloadLength, headerAndPayloadLength + MessageFactory.HMAC_BYTE_LENGTH );
         switch(currentState){
             case HANDSHAKE:
             // CHECK HMAC
-            if(!MessageFactory.checkHMAC(hmac, Arrays.copyOfRange(message, 0, message[1]), "password")){
+            if(!MessageFactory.checkHMAC(hmac, Arrays.copyOfRange(message, 0, headerAndPayloadLength), "password")){
                 throw new Exception("HANDSHAKE hmac is not correct");
             }
             checkSequenceNumber(message);
-            slidingWindowThreshold =MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_SEQUENCE_NBR);
+            //slidingWindowThreshold =MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_SEQUENCE_NBR);
             byte msgType = message[MessageFactory.PROTOCOL_POS_MSG_TYPE];
             // Regardless of initiating pary, xb always needs to be parsed.
             xb = MessageFactory.parseIntFromByte(message, MessageFactory.PROTOCOL_POS_X);
@@ -126,11 +126,12 @@ public class MessageMonitor{
     }
 
     private void handleDataTransfer(byte[] message) throws Exception{
-        byte[] hmac = Arrays.copyOfRange(message, message[1], message[1] + 32);
-        byte[] integrityString = Arrays.copyOfRange(message, 0, message[1]);
+        int headerAndPayloadLength = message[MessageFactory.PROTOCOL_POS_MSG_LENGTH];
+        byte[] hmac = Arrays.copyOfRange(message, headerAndPayloadLength, headerAndPayloadLength + MessageFactory.HMAC_BYTE_LENGTH);
+        byte[] integrityString = Arrays.copyOfRange(message, 0, headerAndPayloadLength);
         if(MessageFactory.checkHMAC(hmac, integrityString, Integer.toString(sessionKey))){
             checkSequenceNumber(message);
-            byte [] encryptedMsg = Arrays.copyOfRange(message, MessageFactory.HEADER_LENGTH, message[1]);
+            byte [] encryptedMsg = Arrays.copyOfRange(message, MessageFactory.HEADER_LENGTH, headerAndPayloadLength);
             String encryptedString = new String(encryptedMsg, "UTF-8");;
             String decryptedString = decryptString(encryptedString);
             System.out.println("I decrypted: " + encryptedString + " as: " + decryptedString);
@@ -143,17 +144,18 @@ public class MessageMonitor{
     }
 
     private void initDataTransferMode() {
-        System.out.println("\n-------------\nHANDSHAKE SUCCESSFUL\n-------------\nDATA TRANSFER MODE INITIATED\n-------------\n");
-        System.out.println("\n-------\nValues negotiated:\ng: " + g + " p: " + p + " xb: " + xb + "a: " + a);
         currentState = DATA_TRANSFER;
-        Double tempXb = (Math.pow(xb, a) % p);
-        sessionKey = tempXb.intValue();
+        System.out.println("\n-------------\nHANDSHAKE SUCCESSFUL\n-------------\nDATA TRANSFER MODE INITIATED\n-------------\n");
+        System.out.println("\n-------\ng: " + g + " p: " + p + " xb: " + xb + "a: " + a);
+        System.out.println("xb: " + xb);
+        long s = (long) (Math.pow(xb, a) % p) ;
+        System.out.println("s: " + s);
+        //int tempXbInt = tempXb.intValue();
+        //System.out.println("tempXbInt: " + (int)tempXbInt);
+        sessionKey = Math.toIntExact(s);
         System.out.println("Calculating sessionKey: " + sessionKey);
         byte[] keyBytes = new byte[4];
         MessageFactory.putIntIntoByteBuffer(sessionKey, keyBytes, 0);
-        //MessageDigest sha = null;
-        //sha = MessageDigest.getInstance("SHA-1");
-        //key = sha.digest(key);
         keyBytes = Arrays.copyOf(keyBytes, 16);
         secretKey = new SecretKeySpec(keyBytes, "AES");
     }

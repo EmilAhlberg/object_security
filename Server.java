@@ -1,5 +1,3 @@
-import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -20,12 +18,4 @@ public class Server {
     public static void main(String[] args) throws Exception {
         Server server = new Server(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]));
     }
-}
-
-
-enum ProtocolState {
-    IDLE,
-    HELLO,
-    HELLO_RESPONSE,
-    IN_SESSION
 }
