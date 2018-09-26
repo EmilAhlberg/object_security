@@ -28,7 +28,7 @@ public class CachePoller implements Runnable {
                 DatagramPacket p = new DatagramPacket(
                 pollMessage, pollMessage.length, IPAddress, cachePort);
                 socket.send(p);
-                Thread.sleep(10000);
+                Thread.sleep(5000);
             }
         } catch(Exception e) {
             System.out.println("CacheDispatcher exception:" + e.getMessage());

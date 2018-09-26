@@ -8,9 +8,9 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.nio.ByteBuffer;
 
 public class MessageMonitor{
-
     private LinkedList<byte[]> messages = new LinkedList<byte[]>();
     private int currentState;
     private static final int HANDSHAKE = 0;
@@ -23,7 +23,7 @@ public class MessageMonitor{
     private static int currentSequenceNumber = 1; // needs to be larger than threshold to be accepted
 
     public MessageMonitor() {
-        a =  new SecureRandom().nextInt(20) + 1; //between 1-10, proof-of-concept!
+        a =  new SecureRandom().nextInt(5) + 1; //between 1-5, proof-of-concept!
         System.out.println("Private a: " + a);
         g = 3;
         p = 2081; //TODO: check format if primes, relative primes  etc...
@@ -75,7 +75,7 @@ public class MessageMonitor{
             initDataTransferMode();
             break;
             case DATA_TRANSFER:
-            message = MessageFactory.buildMessage(bPort, MessageFactory.TYPE_THREE, secretKey, sessionKey, currentSequenceNumber++);
+            message = MessageFactory.buildMessage(bPort, MessageFactory.TYPE_THREE, secretKey, Integer.toString(sessionKey), currentSequenceNumber++);
             break;
             default:
             throw new Exception("Communication state unrecognized.");
@@ -143,21 +143,33 @@ public class MessageMonitor{
 
     }
 
-    private void initDataTransferMode() {
+    private void initDataTransferMode() throws Exception {
         currentState = DATA_TRANSFER;
         System.out.println("\n-------------\nHANDSHAKE SUCCESSFUL\n-------------\nDATA TRANSFER MODE INITIATED\n-------------\n");
-        System.out.println("\n-------\ng: " + g + " p: " + p + " xb: " + xb + "a: " + a);
-        System.out.println("xb: " + xb);
-        long s = (long) (Math.pow(xb, a) % p) ;
-        System.out.println("s: " + s);
+        System.out.println("TAKING");
+        System.out.println("\n-------\ng: " + g + " \np: " + p + " \nxb: " + xb + "\na: " + a + "\nxb: " + xb);
+        System.out.println("Math.pow(xb, a): " + Math.pow(xb, a));
+        System.out.println("Math.pow(xb, a) % p: " + (Math.pow(xb, a) % p));
         //int tempXbInt = tempXb.intValue();
         //System.out.println("tempXbInt: " + (int)tempXbInt);
-        sessionKey = Math.toIntExact(s);
+        Double s = (Math.pow(xb, a)% p);
+        sessionKey =s.intValue();
         System.out.println("Calculating sessionKey: " + sessionKey);
+        /*
+        byte[] keyBytes = new byte[8];
+
+        ByteBuffer.wrap(keyBytes).putDouble(sessionKey);
+        MessageDigest sha = MessageDigest.getInstance("SHA-1");
+        byte[] key = sha.digest(keyBytes);
+        key = Arrays.copyOf(key, 16);;
+        */
         byte[] keyBytes = new byte[4];
         MessageFactory.putIntIntoByteBuffer(sessionKey, keyBytes, 0);
+        //MessageDigest sha = null;
+        //sha = MessageDigest.getInstance("SHA-1");
+        //key = sha.digest(key);
         keyBytes = Arrays.copyOf(keyBytes, 16);
-        secretKey = new SecretKeySpec(keyBytes, "AES");
+        secretKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
     }
 
     public String decryptString(String encryptedString) throws Exception {

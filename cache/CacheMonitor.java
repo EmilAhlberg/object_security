@@ -33,7 +33,6 @@ public class CacheMonitor {
 
     public synchronized void sendMessage(DatagramSocket socket) throws Exception{
         while (dataIsRequested.isEmpty()) {
-            System.out.println("CacheDispatcher waiting for messages!");
             wait();
         }
         //get the destination

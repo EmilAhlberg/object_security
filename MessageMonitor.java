@@ -23,7 +23,7 @@ public class MessageMonitor{
     private static int currentSequenceNumber = 1; // needs to be larger than threshold to be accepted
 
     public MessageMonitor() {
-        a =  new SecureRandom().nextInt(10) + 1; //between 1-10, proof-of-concept!
+        a =  new SecureRandom().nextInt(5) + 1; //between 1-5, proof-of-concept!
         System.out.println("SuperRandom: " + a);
         g = 3;
         p = 2081; //TODO: check format if primes, relative primes  etc...

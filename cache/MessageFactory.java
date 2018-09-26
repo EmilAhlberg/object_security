@@ -90,7 +90,7 @@ public class MessageFactory {
     }
 
     // For type 3 messages (i.e. during data transfer mode)
-    public static byte[] buildMessage(int destPort, int messageType, SecretKeySpec secretKey, int sessionKey, int sequenceNbr) throws Exception {
+    public static byte[] buildMessage(int destPort, int messageType, SecretKeySpec secretKey, String sessionKey, int sequenceNbr) throws Exception {
         byte[] message = new byte[64];
         Random r = new Random();
         String cipherText = strings[r.nextInt(strings.length)];
@@ -106,7 +106,7 @@ public class MessageFactory {
         // PAYLOAD
         System.arraycopy(byteMsg, 0, message, HEADER_LENGTH, byteMsg.length); // add payload to message
         // HMAC
-        byte[] hmac = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength ), Integer.toString(sessionKey));
+        byte[] hmac = createHMAC(Arrays.copyOfRange(message, 0, headerAndPayloadLength ), sessionKey);
         int TEMP = hmac.length + headerAndPayloadLength;
         System.arraycopy(hmac, 0, message, headerAndPayloadLength, hmac.length); //add hmac to message
         System.out.println("The cryptoText " + msg+ " is in plainText: " + cipherText);
