@@ -24,7 +24,7 @@ public class MessageMonitor{
 
     public MessageMonitor() {
         a =  new SecureRandom().nextInt(5) + 1; //between 1-5, proof-of-concept!
-        System.out.println("SuperRandom: " + a);
+        System.out.println("Private a: " + a);
         g = 3;
         p = 2081; //TODO: check format if primes, relative primes  etc...
         currentState = HANDSHAKE;
@@ -144,7 +144,7 @@ public class MessageMonitor{
 
     private void initDataTransferMode() {
         System.out.println("\n-------------\nHANDSHAKE SUCCESSFUL\n-------------\nDATA TRANSFER MODE INITIATED\n-------------\n");
-        System.out.println("\n-------\nValues negotiated:\ng: " + g + " p: " + p + " xb: " + xb + "a: " + a);
+        //System.out.println("\n-------\nValues negotiated:\ng: " + g + " p: " + p + " xb: " + xb + "a: " + a);
         currentState = DATA_TRANSFER;
         Double tempXb = (Math.pow(xb, a) % p);
         sessionKey = tempXb.intValue();

@@ -15,22 +15,21 @@ public class MessageFactory {
     public static final int TYPE_TWO = 2;
     public static final int TYPE_THREE = 3;
     public static final int TYPE_FOUR = 4;
-    //msg type/msg length/sequenceNbr
-    public static final int HEADER_LENGTH = 4 + 1 + 1 + 4 + 4;
+    // portNbr/msg type/msg length/sequenceNbr
+    public static final int HEADER_LENGTH = 4 + 1 + 1 + 4;
     //  x/g/p
     public static final int TYPE_ONE_PAYLOAD_LENGTH = 4 + 4 + 4 ;
     // x
     public static final int TYPE_TWO_PAYLOAD_LENGTH = 4;
 
-    public static final int CACHE_PORT_OFFSET = 4;
 
     public static final int HMAC_BYTE_LENGTH = 20;
     /* CURRENT PROTOCOL FORMAT:
-    |                                          | THIS PORTION IS ENCRYPTED!|
-    |                 HEADER                   |         PAYLOAD           |               HMAC                     |
-    |    TYPE.  |   LENGTH.    |  SEQ_NBR      |
-    |  (1 byte)     (1 byte)     (4 bytes)          (64-12-<hmac size>)    (16-32 bytes depending on MD5-SHA1-SHA256)
-    |          THIS PORTION IS HMAC INTEGRITY PROTECTED                    |
+    |                                                    | THIS PORTION IS ENCRYPTED!|
+    |                 HEADER                             |         PAYLOAD           |               HMAC                     |
+    |  PORT   |    TYPE.  |   LENGTH.    |  SEQ_NBR      |
+    | 4(bytes)   (1 byte)     (1 byte)     (4 bytes)           (64-14-20 bytes)            (    20 bytes , SHA1 output)
+    |          THIS PORTION IS HMAC INTEGRITY PROTECTED                         |
     */
     public static final int PROTOCOL_POS_DEST_PORT = 0;
     public static final int PROTOCOL_POS_MSG_TYPE = 4;

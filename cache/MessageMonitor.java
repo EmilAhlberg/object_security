@@ -146,30 +146,15 @@ public class MessageMonitor{
     private void initDataTransferMode() throws Exception {
         currentState = DATA_TRANSFER;
         System.out.println("\n-------------\nHANDSHAKE SUCCESSFUL\n-------------\nDATA TRANSFER MODE INITIATED\n-------------\n");
-        System.out.println("TAKING");
         System.out.println("\n-------\ng: " + g + " \np: " + p + " \nxb: " + xb + "\na: " + a + "\nxb: " + xb);
-        System.out.println("Math.pow(xb, a): " + Math.pow(xb, a));
-        System.out.println("Math.pow(xb, a) % p: " + (Math.pow(xb, a) % p));
-        //int tempXbInt = tempXb.intValue();
-        //System.out.println("tempXbInt: " + (int)tempXbInt);
         Double s = (Math.pow(xb, a)% p);
         sessionKey =s.intValue();
         System.out.println("Calculating sessionKey: " + sessionKey);
-        /*
-        byte[] keyBytes = new byte[8];
-
-        ByteBuffer.wrap(keyBytes).putDouble(sessionKey);
-        MessageDigest sha = MessageDigest.getInstance("SHA-1");
-        byte[] key = sha.digest(keyBytes);
-        key = Arrays.copyOf(key, 16);;
-        */
         byte[] keyBytes = new byte[4];
         MessageFactory.putIntIntoByteBuffer(sessionKey, keyBytes, 0);
-        //MessageDigest sha = null;
-        //sha = MessageDigest.getInstance("SHA-1");
-        //key = sha.digest(key);
+
         keyBytes = Arrays.copyOf(keyBytes, 16);
-        secretKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
+        secretKey = new SecretKeySpec(keyBytes, "AES");
     }
 
     public String decryptString(String encryptedString) throws Exception {
