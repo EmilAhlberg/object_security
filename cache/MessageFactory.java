@@ -29,7 +29,7 @@ public class MessageFactory {
     |                 HEADER                             |         PAYLOAD           |               HMAC                     |
     |  PORT   |    TYPE.  |   LENGTH.    |  SEQ_NBR      |
     | 4(bytes)   (1 byte)     (1 byte)     (4 bytes)           (64-14-20 bytes)            (    20 bytes , SHA1 output)
-    |          THIS PORTION IS HMAC INTEGRITY PROTECTED                         |
+    |          THIS PORTION IS HMAC INTEGRITY PROTECTED                              |
     */
     public static final int PROTOCOL_POS_DEST_PORT = 0;
     public static final int PROTOCOL_POS_MSG_TYPE = 4;
