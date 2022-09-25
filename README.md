@@ -1,4 +1,5 @@
-# object_security
+# Object Security PoC
+
 Proof-of-concept implementation of object security in IoT communication.
 Focused on providing object security for small
 data packets, no bigger than 64 bytes. Replay protection, data integrity and
