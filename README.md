@@ -9,7 +9,7 @@ storing messages between communicating parties A and B.
 Protocol:
 ![image](https://user-images.githubusercontent.com/15932746/192160055-67690ef3-7730-4dbe-8ef2-248ee66b35e0.png)
 
-**Design features**
+**Design features/choices**
 - This implementation works on the principle of object security since all the security is done on
 the application layer, which enables the communication to build on UDP.
 
@@ -17,14 +17,14 @@ the application layer, which enables the communication to build on UDP.
 is provided using HMAC. Confidentiality is provided using encryption with
 keys generated using Diffie-Hellman key exchange. Lastly replay protec-
 tion is given using a sliding window method with a sequence number.
+
 - Uses UDP as the way to exchange data between the two parties:
 UDP is used as the transportation protocol for all the messages.
 
 - Works on the principle of forward security: Diffie-Hellman provides
 forward security, in fact it gives perfect forward secrecy.
 
--Have at least two distinct parts; handshake and (protected) data
-exchange: The protocol does contain a handshake and a data exchange
+- The protocol does contain a handshake and a data exchange
 stage, with different message structure, as well as state variables in the
 code.
 
