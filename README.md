@@ -3,13 +3,21 @@
 Proof-of-concept implementation of object security in IoT communication.
 Focused on providing object security for small
 data packets, no bigger than 64 bytes. Replay protection, data integrity and
-confidentiality has been the main focus points of the project. Additionally, the
-IoT communication has been tested through an intermediate party, a cache,
-storing messages between communicating parties A and B.
+confidentiality was been the main focus points of the project. T
 
-Protocol:
-![image](https://user-images.githubusercontent.com/15932746/192160055-67690ef3-7730-4dbe-8ef2-248ee66b35e0.png)
+The IoT communication has been tested through an intermediate party, a cache,
+storing messages between communicating parties A and B. 
 
+Communication-wise, the PoC utilizes Datagrams/UDP communication and with Java concurrency featurs (threads/runnables orchestrated using the monitor synchronization construct).
+
+**Protocol:**
+```
+    |                                                    | THIS PORTION IS ENCRYPTED!|
+    |                 HEADER                             |         PAYLOAD           |               HMAC                     |
+    |  PORT   |    TYPE.  |   LENGTH.    |  SEQ_NBR      |
+    | 4(bytes)   (1 byte)     (1 byte)     (4 bytes)           (64-14-20 bytes)            (    20 bytes , SHA1 output)
+    |          THIS PORTION IS HMAC INTEGRITY PROTECTED                              |
+```
 **Design features/choices**
 - This implementation works on the principle of object security since all the security is done on
 the application layer, which enables the communication to build on UDP.
