@@ -3,12 +3,12 @@
 Proof-of-concept implementation of object security in IoT communication.
 Focused on providing object security for small
 data packets, no bigger than 64 bytes. Replay protection, data integrity and
-confidentiality was been the main focus points of the project. T
+confidentiality have been the main focus points of the project.
 
 The IoT communication has been tested through an intermediate party, a cache,
 storing messages between communicating parties A and B. 
 
-Communication-wise, the PoC utilizes Datagrams/UDP communication and with Java concurrency featurs (threads/runnables orchestrated using the monitor synchronization construct).
+Communication-wise, the PoC utilizes Datagrams/UDP communication with Java concurrency features (threads/runnables orchestrated using the monitor synchronization construct).
 
 **Protocol:**
 ```
